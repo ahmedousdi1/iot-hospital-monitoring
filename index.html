@@ -1,0 +1,91 @@
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🏥 Hospital Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body { font-family: Arial; background: #0a0a0a; color: white; padding: 20px; }
+        h1 { color: #00bcd4; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .card { background: #1a1a1a; border-radius: 10px; padding: 20px; }
+        .card h2 { color: #00bcd4; margin-top: 0; }
+        .value { font-size: 2em; font-weight: bold; }
+        .alert-box { background: red; padding: 20px; border-radius: 10px; 
+                     text-align: center; font-size: 1.5em; display: none; }
+        .env-alert { background: orange; padding: 10px; border-radius: 5px;
+                     display: none; margin-top: 10px; }
+        .nurse-box { color: #00ff88; font-size: 1.2em; }
+        .timer { color: #ffcc00; font-size: 1.5em; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Smart Hospital Room Dashboard</h1>
+    <div class="alert-box" id="codeblue">🚨 CODE BLUE! Emergency!</div>
+    <div class="grid">
+        <div class="card">
+            <h2>❤️ Patient Vitals</h2>
+            <div>Heart Rate: <span class="value" id="hr">--</span> bpm</div>
+            <div>SpO2: <span class="value" id="spo2">--</span>%</div>
+            <div>GSR: <span class="value" id="gsr">--</span></div>
+        </div>
+        <div class="card">
+            <h2>🌡️ Room Environment</h2>
+            <div>Temperature: <span class="value" id="temp">--</span>°C</div>
+            <div>Humidity: <span class="value" id="humidity">--</span>%</div>
+            <div class="env-alert" id="env-alert">⚠️ Environment Alert!</div>
+        </div>
+        <div class="card">
+            <h2>👩‍⚕️ Nurse Tracking</h2>
+            <div class="nurse-box">Last check-in: <span id="nurse">--</span></div>
+            <div class="timer">Response time: <span id="response">--</span></div>
+        </div>
+        <div class="card">
+            <h2>📋 Alert Log</h2>
+            <div id="log" style="font-size:0.9em; color:#aaa;"></div>
+        </div>
+    </div>
+    <script>
+        var socket = io();
+        socket.on("vitals", function(data) {
+            document.getElementById("hr").innerText = data.hr;
+            document.getElementById("spo2").innerText = data.spo2;
+            document.getElementById("gsr").innerText = data.gsr;
+        });
+        socket.on("alert", function(data) {
+            var box = document.getElementById("codeblue");
+            box.style.display = "block";
+            addLog("🚨 CODE BLUE → HR=" + data.hr + " SpO2=" + data.spo2 + "%");
+            setTimeout(() => { box.style.display = "none"; }, 5000);
+        });
+        socket.on("environment", function(data) {
+            document.getElementById("temp").innerText = data.temp;
+            document.getElementById("humidity").innerText = data.humidity;
+        });
+        socket.on("env_alert", function(data) {
+            var box = document.getElementById("env-alert");
+            box.style.display = "block";
+            box.innerText = "⚠️ " + data.type;
+            addLog("🔥 ENV ALERT: " + data.type);
+            setTimeout(() => { box.style.display = "none"; }, 4000);
+        });
+        socket.on("rfid", function(data) {
+            document.getElementById("nurse").innerText = data.nurse;
+            addLog("👩‍⚕️ " + data.nurse + " checked in");
+        });
+        socket.on("response_time", function(data) {
+            document.getElementById("response").innerText = data.seconds + "s";
+            addLog("⏱️ " + data.nurse + " responded in " + data.seconds + "s");
+        });
+        function addLog(message) {
+            var log = document.getElementById("log");
+            var time = new Date().toLocaleTimeString();
+            log.innerHTML = "[" + time + "] " + message + "<br>" + log.innerHTML;
+        }
+    </script>
+</body>
+</html>
