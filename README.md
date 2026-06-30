@@ -1,1 +1,0 @@
-# iot-hospital-monitoring
